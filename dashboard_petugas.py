@@ -342,8 +342,8 @@ if not os.path.exists(LATEST_FILE):
 file_mtime   = os.path.getmtime(LATEST_FILE)
 df_raw       = load_data(LATEST_FILE, cache_key=file_mtime)
 last_updated = datetime.fromtimestamp(
-    file_mtime, tz=ZoneInfo("Asia/Jayapura")
-).strftime("%d %b %Y · %H:%M WIT")
+    file_mtime, tz=ZoneInfo("Asia/Makassar")
+).strftime("%d %b %Y · %H:%M WITA")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Header
