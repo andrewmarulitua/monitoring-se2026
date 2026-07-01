@@ -7,7 +7,7 @@ import os
 
 NAMA_KABUPATEN = "ENDE"
 
-BASE_PATH = "/BPS/monitoring-se2026/data"
+BASE_PATH = "data"
 
 LATEST_FILE = os.path.join(
     BASE_PATH,

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 # 1. Definisikan Path dan Nama File
-BASE_PATH = "/BPS/monitoring-se2026/data"
+BASE_PATH = "data"
 target_file_path = os.path.join(BASE_PATH, "SCRAPING_REKAP_SE2026_ENDE_LATEST.xlsx")
 master_file_path = os.path.join(BASE_PATH, "master_data.xlsx")
 
