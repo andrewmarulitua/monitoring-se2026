@@ -322,11 +322,11 @@ from io import BytesIO
 
 from io import BytesIO
 
-def to_excel(df):
+def to_excel(df, sheet_name="Rekap Pencacah"):
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Rekap Pencacah")
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
 
     return output.getvalue()
 # ─────────────────────────────────────────────────────────────────────────────
