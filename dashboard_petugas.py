@@ -998,3 +998,16 @@ with tab_raw:
     view_df = rename_display(df[show_cols] if show_cols else df)
 
     st.dataframe(view_df, use_container_width=True, hide_index=True)
+
+    # =========================
+    # Download Data Mentah
+    # =========================
+    timestamp_raw = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    st.download_button(
+        label="📥 Download Data Mentah (XLSX)",
+        data=to_excel(view_df, sheet_name="Data Mentah"),
+        file_name=f"data_mentah_{timestamp_raw}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_raw"
+    )
