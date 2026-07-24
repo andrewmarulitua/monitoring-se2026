@@ -347,7 +347,7 @@ last_updated = datetime.fromtimestamp(
 # Header
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
-<div style="display:flex;align-items:center;justify-content:space-between;
+<div style="display:flex;align-items:center;justify-space-between;
             flex-wrap:wrap;gap:10px;margin-bottom:1rem;">
     <div style="display:flex;align-items:center;gap:12px;">
         <div style="background:linear-gradient(135deg,#14b8a6,#0ea5e9);
@@ -499,7 +499,8 @@ with tab_overview:
     status_totals_without_draft = df[status_cols_without_draft].sum().sort_values(ascending=False) if status_cols_without_draft else pd.Series(dtype=float)
     status_totals_without_draft = status_totals_without_draft[status_totals_without_draft > 0]
 
-    def render_status_distribution(status_totals_view, pct_value, title_gauge, total_progress_value):
+    # Penambahan parameter key_prefix agar elemen ID chart unik
+    def render_status_distribution(status_totals_view, pct_value, title_gauge, total_progress_value, key_prefix="default"):
         if status_totals_view.empty:
             st.info("Belum ada status bernilai lebih dari 0 untuk versi ini.")
             return
@@ -523,7 +524,7 @@ with tab_overview:
                 xaxis=dict(showgrid=True, gridcolor="rgba(100,116,139,0.15)"),
                 yaxis=dict(showgrid=False),
             )
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, use_container_width=True, key=f"bar_{key_prefix}")
 
         with c_pie:
             fig_pie = px.pie(
@@ -542,7 +543,7 @@ with tab_overview:
                 height=360, showlegend=True,
                 legend=dict(orientation="v", x=1.05),
             ))
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie, use_container_width=True, key=f"pie_{key_prefix}")
 
         with c_gauge:
             st.metric(
@@ -573,7 +574,7 @@ with tab_overview:
                 },
             ))
             fig_gauge.update_layout(**styled_chart_layout(height=300))
-            st.plotly_chart(fig_gauge, use_container_width=True)
+            st.plotly_chart(fig_gauge, use_container_width=True, key=f"gauge_{key_prefix}")
 
     tab_no_draft, tab_with_draft = st.tabs([
         "Progress tanpa Draft",
@@ -586,6 +587,7 @@ with tab_overview:
             pct_progress_without_draft,
             "Progress Tanpa Draft",
             total_progress_without_draft,
+            key_prefix="no_draft",
         )
 
     with tab_with_draft:
@@ -594,6 +596,7 @@ with tab_overview:
             pct_progress_with_draft,
             "Progress Termasuk Draft",
             total_progress_with_draft,
+            key_prefix="with_draft",
         )
 
 # ══════════════════════════════════════════════════════════════════════════════
