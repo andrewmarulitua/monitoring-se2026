@@ -347,7 +347,7 @@ last_updated = datetime.fromtimestamp(
 # Header
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
-<div style="display:flex;align-items:center;justify-space-between;
+<div style="display:flex;align-items:center;justify-content:space-between;
             flex-wrap:wrap;gap:10px;margin-bottom:1rem;">
     <div style="display:flex;align-items:center;gap:12px;">
         <div style="background:linear-gradient(135deg,#14b8a6,#0ea5e9);
