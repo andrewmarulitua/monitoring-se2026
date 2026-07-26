@@ -11,224 +11,199 @@ from io import BytesIO
 from config_se2026 import LATEST_FILE
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Konfigurasi halaman
+# Konfigurasi Halaman
 # ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Monitoring SE2026",
-    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
+# ── Custom CSS (Tema Modern Orange #ECB65F - Mode Terang) ────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
-/* ── Reset font global untuk SEMUA mode (terang & gelap) ── */
-html, body,
-[class*="css"],
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"],
-.main,
-p, div, label, td, th, li, a, button {
-    font-family: 'Inter', sans-serif !important;
+/* ── Reset Global ── */
+html, body, [class*="css"], [data-testid="stAppViewContainer"], [data-testid="stMain"], .main {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    background-color: #FAF8F5 !important;
+    color: #2D3748 !important;
 }
 
-/* Sembunyikan sidebar & toggle */
-[data-testid="collapsedControl"],
-section[data-testid="stSidebar"] {
+/* Sembunyikan Sidebar Total */
+[data-testid="collapsedControl"], section[data-testid="stSidebar"] {
     display: none !important;
 }
 
-/* ── Warna teks utama mengikuti tema ── */
-[data-testid="stAppViewContainer"] {
-    padding-top: 0 !important;
-}
 .main .block-container {
-    padding-top: 1.2rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
+    padding-top: 1.5rem;
+    padding-bottom: 2.5rem;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
     max-width: 100%;
 }
 
-/* ───────────────── KPI Cards ───────────────── */
+/* ── Header Banner ── */
+.header-container {
+    background: linear-gradient(135deg, #ECB65F 0%, #D8983B 100%);
+    padding: 1.5rem 2rem;
+    border-radius: 16px;
+    color: #FFFFFF;
+    box-shadow: 0 10px 25px -5px rgba(236, 182, 95, 0.3);
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
 
-div[data-testid="stMetric"] {
+.header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.02em;
+    color: #FFFFFF !important;
+}
+
+.header-subtitle {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    opacity: 0.92;
+    color: #FFF8EE !important;
+}
+
+.header-badge {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+/* ── Container Filter ── */
+.filter-card {
+    background: #FFFFFF;
+    border: 1px solid #F0E6D8;
     border-radius: 14px;
-    padding: 1.1rem 1.2rem 1rem 1.4rem;
-    position: relative;
-    overflow: hidden;
-
-    background: var(--secondary-background-color);
-    border: 1px solid rgba(100,116,139,0.15);
-
-    box-shadow:
-        0 1px 2px rgba(15,23,42,0.04),
-        0 4px 12px rgba(15,23,42,0.06);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
-div[data-testid="stMetric"]::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(
-        180deg,
-        #14b8a6,
-        #0ea5e9
-    );
+/* ── KPI Cards ── */
+div[data-testid="stMetric"] {
+    background: #FFFFFF !important;
+    border: 1px solid #F2E3CE !important;
+    border-radius: 14px !important;
+    padding: 1rem 1.25rem !important;
+    box-shadow: 0 4px 12px rgba(236, 182, 95, 0.08) !important;
+    border-top: 4px solid #ECB65F !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Label KPI */
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(236, 182, 95, 0.15) !important;
+}
 
 div[data-testid="stMetric"] label {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.72rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.08em !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
     text-transform: uppercase !important;
-
-    color: var(--text-color) !important;
-    opacity: .7;
+    color: #8C7355 !important;
 }
-
-/* Nilai KPI */
 
 div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-family: 'JetBrains Mono', monospace !important;
-    font-size: 1.8rem !important;
+    font-size: 1.75rem !important;
     font-weight: 700 !important;
-
-    color: var(--text-color) !important;
+    color: #2D3748 !important;
 }
 
-/* Delta KPI */
-
-div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.8rem !important;
-    color: #10b981 !important;
+/* ── Styling Tab Modern ── */
+div[data-baseweb="tab-list"] {
+    gap: 8px;
+    background-color: #EFE9E0;
+    padding: 6px;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
 }
 
-/* Tooltip Help (?) */
-
-div[data-testid="stMetric"] button {
-    color: var(--text-color) !important;
-    opacity: .6;
-}
-
-div[data-testid="stMetric"] button:hover {
-    color: #14b8a6 !important;
-    opacity: 1;
-}
-
-/* ── Section headers ── */
-h1, h2, h3, h4 {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.01em !important;
-}
-h2::after {
-    content: "";
-    display: block;
-    width: 40px;
-    height: 3px;
-    background: linear-gradient(90deg, #14b8a6, #0ea5e9);
-    border-radius: 2px;
-    margin-top: 6px;
-}
-
-/* ── Tab styling ── */
 button[data-baseweb="tab"] {
-    background: transparent !important;
-    border-bottom: 2px solid transparent !important;
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 500 !important;
-    font-size: 0.88rem !important;
-    padding: 0.6rem 1rem !important;
-    color: #64748b !important;
+    border: none !important;
+    background-color: transparent !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 1.25rem !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    color: #64748B !important;
+    transition: all 0.2s ease !important;
 }
+
 button[data-baseweb="tab"][aria-selected="true"] {
-    color: #14b8a6 !important;
-    border-bottom-color: #14b8a6 !important;
+    background-color: #ECB65F !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(236, 182, 95, 0.3) !important;
+}
+
+/* ── Custom Button & Controls ── */
+.stButton > button, div[data-testid="stDownloadButton"] > button {
+    background-color: #ECB65F !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1.25rem !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.stButton > button:hover, div[data-testid="stDownloadButton"] > button:hover {
+    background-color: #D8983B !important;
+    border: none !important;
+    color: #FFFFFF !important;
 }
 
 /* ── Dataframe ── */
 div[data-testid="stDataFrame"] {
-    border: 1px solid rgba(100,116,139,0.25);
-    border-radius: 12px;
-    overflow: hidden;
-}
-iframe { border-radius: 12px !important; }
-
-/* ── Divider ── */
-hr {
-    border-color: rgba(100,116,139,0.2) !important;
-    margin: 1.25rem 0 !important;
+    border: 1px solid #EFE9E0 !important;
+    border-radius: 12px !important;
+    background: #FFFFFF !important;
 }
 
-/* ── Expander ── */
-details {
-    border-radius: 10px !important;
+/* ── Chart Container ── */
+.stPlotlyChart {
+    background: #FFFFFF !important;
+    border: 1px solid #F0E6D8 !important;
+    border-radius: 14px !important;
     padding: 0.5rem !important;
-    border: 1px solid rgba(100,116,139,0.25) !important;
-}
-details summary {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.85rem !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
 }
 
-/* ── Caption / small text ── */
-small, .stCaption, [data-testid="stCaptionContainer"] {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.78rem !important;
-    color: #64748b !important;
+/* ── Expander & Alert ── */
+details {
+    border: 1px solid #F0E6D8 !important;
+    border-radius: 10px !important;
+    background: #FFFFFF !important;
 }
 
-/* ── Alert ── */
 div[data-testid="stAlert"] {
     border-radius: 10px !important;
-    border-left-width: 4px !important;
-    font-family: 'Inter', sans-serif !important;
+    background-color: #FFF8EE !important;
+    color: #8C5E14 !important;
+    border: 1px solid #F2E3CE !important;
 }
 
-/* ── Multiselect & selectbox ── */
-div[data-baseweb="select"] span,
-div[data-baseweb="tag"] span {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.85rem !important;
-}
-
-/* ── Plotly chart container ── */
-.stPlotlyChart {
-    border: 1px solid rgba(100,116,139,0.2);
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-/* ── Badge update ── */
-.badge-update {
-    background: rgba(16,185,129,0.15);
-    border: 1px solid #10b981;
-    border-radius: 20px;
-    padding: 4px 14px;
-    color: #10b981;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.76rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-    /* Warna ikon help metric */
-[data-testid="stMetric"] button {
-    color: #0f172a !important;
-}
-
-/* Hover */
-[data-testid="stMetric"] button:hover {
-    color: #14b8a6 !important;
+hr {
+    border-color: #EFE9E0 !important;
+    margin: 1.5rem 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -243,7 +218,7 @@ except ImportError:
     pass
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Konstanta
+# Konstanta & Layout Chart
 # ─────────────────────────────────────────────────────────────────────────────
 IDENTITY_COLS = [
     "userId", "username", "email", "role", "regionCode",
@@ -254,7 +229,6 @@ IDENTITY_COLS = [
     "jumlah_prelist_awal",
 ]
 
-# Pemetaan nama kolom teknis → nama tampilan
 COL_LABELS = {
     "nama_pcl":  "Nama Pencacah",
     "nama_pml":  "Nama Pengawas",
@@ -277,20 +251,21 @@ def nice_col(c: str) -> str:
 DONE_KEYWORDS     = ["APPROVED", "SUBMITTED"]
 NOT_DONE_KEYWORDS = ["OPEN", "DRAFT"]
 
-PLOT_TEMPLATE = "plotly_dark"
-PLOT_BG       = "rgba(30,41,59,0)"
-PAPER_BG      = "rgba(30,41,59,0)"
-TEAL_PALETTE  = [
-    "#14b8a6", "#0ea5e9", "#6366f1", "#f59e0b",
-    "#ef4444", "#84cc16", "#ec4899", "#f97316",
+# Tema Grafik Tetap Menggunakan Variasi Warna Visual yang Jelas (Mode Terang)
+PLOT_TEMPLATE = "plotly_white"
+PLOT_BG       = "rgba(0,0,0,0)"
+PAPER_BG      = "rgba(0,0,0,0)"
+CHART_PALETTE = [
+    "#ECB65F", "#2A9D8F", "#E76F51", "#E9C46A",
+    "#457B9D", "#6A4C93", "#F4A261", "#264653"
 ]
 
 def styled_chart_layout(**kwargs):
     return dict(
         plot_bgcolor=PLOT_BG,
         paper_bgcolor=PAPER_BG,
-        font=dict(color="#94a3b8", family="Inter, sans-serif", size=12),
-        margin=dict(l=10, r=10, t=30, b=10),
+        font=dict(color="#4A5568", family="Plus Jakarta Sans, sans-serif", size=11),
+        margin=dict(l=15, r=15, t=35, b=15),
         **kwargs,
     )
 
@@ -318,7 +293,6 @@ def to_numeric_safe(df: pd.DataFrame, cols: list) -> pd.DataFrame:
     return df
 
 def rename_display(df: pd.DataFrame) -> pd.DataFrame:
-    """Rename kolom teknis ke nama tampilan untuk ditampilkan ke user."""
     return df.rename(columns=nice_col)
 
 def to_excel(df, sheet_name="Rekap"):
@@ -344,29 +318,15 @@ last_updated = datetime.fromtimestamp(
 ).strftime("%d %b %Y · %H:%M WITA")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Header
+# Header (Gaya Modern Orange Accent)
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
-<div style="display:flex;align-items:center;justify-content:space-between;
-            flex-wrap:wrap;gap:10px;margin-bottom:1rem;">
-    <div style="display:flex;align-items:center;gap:12px;">
-        <div style="background:linear-gradient(135deg,#14b8a6,#0ea5e9);
-                    width:44px;height:44px;border-radius:12px;
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:1.4rem;flex-shrink:0;">📊</div>
-        <div>
-            <h1 style="margin:0;font-size:1.55rem;font-weight:700;
-                       letter-spacing:-0.02em;line-height:1.2;
-                       font-family:'Inter',sans-serif;">
-                Monitoring SE2026 Kabupaten Ende
-            </h1>
-            <p style="margin:0;color:#64748b;font-size:0.8rem;
-                      font-family:'Inter',sans-serif;">
-                Progress per Pencacah / Desa · Data otomatis dari scraping FASIH
-            </p>
-        </div>
+<div class="header-container">
+    <div>
+        <h1 class="header-title">Monitoring SE2026 Kabupaten Ende</h1>
+        <p class="header-subtitle">Progress Pencacahan & Pengawasan · Data Otomatis FASIH</p>
     </div>
-    <span class="badge-update">🟢 Diperbarui: {last_updated}</span>
+    <div class="header-badge">Diperbarui: {last_updated}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -378,23 +338,20 @@ numeric_cols = status_cols + (["total_data"] if "total_data" in df_raw.columns e
 df_raw       = to_numeric_safe(df_raw, numeric_cols)
 
 if not status_cols:
-    st.error(
-        "Tidak ada kolom status terdeteksi. Pastikan file punya kolom "
-        "selain: " + ", ".join(IDENTITY_COLS)
-    )
+    st.error("Tidak ada kolom status terdeteksi dalam file data.")
     st.stop()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Filter bar — inline
+# Filter Bar (Tanpa Sidebar)
 # ─────────────────────────────────────────────────────────────────────────────
-f1, f2 = st.columns([2, 3])
+f1, f2 = st.columns([1, 1])
 
 with f1:
     if "nmkec" in df_raw.columns:
         all_kec = sorted(df_raw["nmkec"].dropna().unique().tolist())
         sel_kec = st.multiselect(
-            "Kecamatan", all_kec,
-            default=[], placeholder="🏙️ Semua kecamatan",
+            "Filter Kecamatan", all_kec,
+            default=[], placeholder="Pilih kecamatan...",
         )
     else:
         sel_kec = []
@@ -403,8 +360,8 @@ with f2:
     if "nama_pcl" in df_raw.columns:
         all_pcl = sorted(df_raw["nama_pcl"].dropna().unique().tolist())
         sel_pcl = st.multiselect(
-            "Pencacah", all_pcl,
-            default=[], placeholder="👤 Cari nama pencacah...",
+            "Filter Pencacah", all_pcl,
+            default=[], placeholder="Cari nama pencacah...",
         )
     else:
         sel_pcl = []
@@ -416,12 +373,10 @@ if sel_pcl and "nama_pcl" in df.columns:
     df = df[df["nama_pcl"].isin(sel_pcl)]
 
 if len(df) < len(df_raw):
-    st.caption(f"Filter aktif · Menampilkan **{len(df):,}** dari **{len(df_raw):,}** baris")
-
-st.divider()
+    st.caption(f"Filter Aktif: Menampilkan {len(df):,} dari {len(df_raw):,} baris data.")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# KPI
+# KPI Cards
 # ─────────────────────────────────────────────────────────────────────────────
 n_pcl      = df["nama_pcl"].nunique() if "nama_pcl" in df.columns else 0
 n_pml      = df["nama_pml"].nunique() if "nama_pml" in df.columns else 0
@@ -429,7 +384,6 @@ n_desa     = df["nmdesa"].nunique()   if "nmdesa"   in df.columns else 0
 total_data = int(df["total_data"].sum()) if "total_data" in df.columns else int(df[status_cols].sum().sum())
 
 done_cols     = [c for c in status_cols if any(k in c.upper() for k in DONE_KEYWORDS)]
-not_done_cols = [c for c in status_cols if any(k in c.upper() for k in NOT_DONE_KEYWORDS)]
 draft_cols    = [c for c in status_cols if "DRAFT" in c.upper()]
 rejected_cols = [c for c in status_cols if any(k in c.upper() for k in ["REJECT", "DITOLAK"])]
 
@@ -453,37 +407,26 @@ pct_progress_without_draft = (total_progress_without_draft / total_data * 100) i
 pct_progress_with_draft    = (total_progress_with_draft / total_data * 100)    if total_data else 0
 
 k1, k2, k3, k4, k5, k6, k7 = st.columns(7)
-k1.metric("Total Pencacah",  f"{n_pcl:,}")
-k2.metric("Total Pengawas",  f"{n_pml:,}")
-k3.metric("Total Desa",      f"{n_desa:,}")
-k4.metric("Total Muatan",    f"{total_data:,}")
-k5.metric(
-    "Draft",
-    f"{total_draft:,}",
-    help="Jumlah Draft"
-)
-k6.metric(
-    "Selesai (Done)",
-    f"{total_done:,}",
-    help="Approved by Pengawas + Submitted by Pencacah"
-)
-k7.metric(
-    "Ditolak",
-    f"{total_rejected:,}",
-    help="Rejected by Pengawas"
-)
+k1.metric("Pencacah", f"{n_pcl:,}")
+k2.metric("Pengawas", f"{n_pml:,}")
+k3.metric("Desa", f"{n_desa:,}")
+k4.metric("Total Muatan", f"{total_data:,}")
+k5.metric("Draft", f"{total_draft:,}")
+k6.metric("Selesai", f"{total_done:,}")
+k7.metric("Ditolak", f"{total_rejected:,}")
+
 st.divider()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TABS
+# TABS (Menggunakan Tampilan Tab Bertema Tanpa Ikon)
 # ─────────────────────────────────────────────────────────────────────────────
 tab_overview, tab_pcl, tab_pml, tab_target, tab_desa, tab_raw = st.tabs([
-    "📈 Distribusi Status",
-    "👤 Per Pencacah",
-    "🧑‍💼 Per Pengawas",
-    "🎯 Target Harian",
-    "🏘️ Per Desa",
-    "🗃️ Data Mentah",
+    "Distribusi Status",
+    "Kinerja Pencacah",
+    "Kinerja Pengawas",
+    "Target & Proyeksi",
+    "Rekap Wilayah",
+    "Data Mentah",
 ])
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -499,10 +442,9 @@ with tab_overview:
     status_totals_without_draft = df[status_cols_without_draft].sum().sort_values(ascending=False) if status_cols_without_draft else pd.Series(dtype=float)
     status_totals_without_draft = status_totals_without_draft[status_totals_without_draft > 0]
 
-    # Penambahan parameter key_prefix agar elemen ID chart unik
     def render_status_distribution(status_totals_view, pct_value, title_gauge, total_progress_value, key_prefix="default"):
         if status_totals_view.empty:
-            st.info("Belum ada status bernilai lebih dari 0 untuk versi ini.")
+            st.info("Belum ada data status bernilai lebih dari 0.")
             return
 
         c_bar, c_pie, c_gauge = st.columns([3, 2, 2])
@@ -512,16 +454,16 @@ with tab_overview:
                 x=status_totals_view.values,
                 y=status_totals_view.index,
                 orientation="h",
-                labels={"x": "Jumlah", "y": ""},
+                labels={"x": "Jumlah Usaha", "y": ""},
                 text=[f"{int(v):,}" for v in status_totals_view.values],
                 color=status_totals_view.index,
-                color_discrete_sequence=TEAL_PALETTE,
+                color_discrete_sequence=CHART_PALETTE,
                 template=PLOT_TEMPLATE,
             )
             fig_bar.update_traces(textposition="outside", textfont_size=11)
             fig_bar.update_layout(
                 **styled_chart_layout(showlegend=False, height=360),
-                xaxis=dict(showgrid=True, gridcolor="rgba(100,116,139,0.15)"),
+                xaxis=dict(showgrid=True, gridcolor="#EFE9E0"),
                 yaxis=dict(showgrid=False),
             )
             st.plotly_chart(fig_bar, use_container_width=True, key=f"bar_{key_prefix}")
@@ -530,8 +472,8 @@ with tab_overview:
             fig_pie = px.pie(
                 values=status_totals_view.values,
                 names=status_totals_view.index,
-                hole=0.55,
-                color_discrete_sequence=TEAL_PALETTE,
+                hole=0.5,
+                color_discrete_sequence=CHART_PALETTE,
                 template=PLOT_TEMPLATE,
             )
             fig_pie.update_traces(
@@ -541,47 +483,37 @@ with tab_overview:
             )
             fig_pie.update_layout(**styled_chart_layout(
                 height=360, showlegend=True,
-                legend=dict(orientation="v", x=1.05),
+                legend=dict(orientation="v", x=1.0),
             ))
             st.plotly_chart(fig_pie, use_container_width=True, key=f"pie_{key_prefix}")
 
         with c_gauge:
-            st.metric(
-                "Jumlah Progress",
-                f"{total_progress_value:,}",
-            )
+            st.metric("Jumlah Progress Ditangani", f"{total_progress_value:,}")
 
             fig_gauge = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=pct_value,
-                number={"suffix": "%", "valueformat": ".2f", "font": {"size": 36, "color": "#14b8a6",
-                                                "family": "JetBrains Mono"}},
-                title={"text": title_gauge,
-                       "font": {"color": "#94a3b8", "size": 13, "family": "Inter"}},
+                number={"suffix": "%", "valueformat": ".2f", "font": {"size": 34, "color": "#2D3748", "family": "JetBrains Mono"}},
+                title={"text": title_gauge, "font": {"color": "#8C7355", "size": 13, "family": "Plus Jakarta Sans"}},
                 gauge={
-                    "axis":      {"range": [0, 100], "tickcolor": "#475569",
-                                  "tickfont": {"color": "#64748b", "size": 10}},
-                    "bar":       {"color": "#14b8a6", "thickness": 0.25},
-                    "bgcolor":   "rgba(0,0,0,0)",
-                    "bordercolor": "rgba(100,116,139,0.3)",
+                    "axis": {"range": [0, 100], "tickcolor": "#CBD5E1", "tickfont": {"color": "#64748B", "size": 10}},
+                    "bar": {"color": "#ECB65F", "thickness": 0.28},
+                    "bgcolor": "rgba(0,0,0,0)",
+                    "bordercolor": "#EFE9E0",
                     "steps": [
-                        {"range": [0,  50], "color": "rgba(30,41,59,0.6)"},
-                        {"range": [50, 80], "color": "rgba(23,37,84,0.6)"},
-                        {"range": [80,100], "color": "rgba(13,61,46,0.6)"},
+                        {"range": [0, 50], "color": "#FFF8EE"},
+                        {"range": [50, 80], "color": "#FDF0D5"},
+                        {"range": [80, 100], "color": "#FCE3B4"},
                     ],
-                    "threshold": {"line": {"color": "#0ea5e9", "width": 3},
-                                  "thickness": 0.8, "value": pct_value},
+                    "threshold": {"line": {"color": "#D8983B", "width": 3}, "thickness": 0.8, "value": pct_value},
                 },
             ))
             fig_gauge.update_layout(**styled_chart_layout(height=300))
             st.plotly_chart(fig_gauge, use_container_width=True, key=f"gauge_{key_prefix}")
 
-    tab_no_draft, tab_with_draft = st.tabs([
-        "Progress tanpa Draft",
-        "Progress termasuk Draft",
-    ])
+    sub_tab1, sub_tab2 = st.tabs(["Tanpa Draft", "Termasuk Draft"])
 
-    with tab_no_draft:
+    with sub_tab1:
         render_status_distribution(
             status_totals_without_draft,
             pct_progress_without_draft,
@@ -590,7 +522,7 @@ with tab_overview:
             key_prefix="no_draft",
         )
 
-    with tab_with_draft:
+    with sub_tab2:
         render_status_distribution(
             status_totals_all,
             pct_progress_with_draft,
@@ -603,10 +535,10 @@ with tab_overview:
 # TAB 2 — Per Pencacah (PCL)
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_pcl:
-    st.subheader("Monitoring Per Pencacah")
+    st.subheader("Monitoring Per Pencacah (PCL)")
 
     if "nama_pcl" not in df.columns:
-        st.warning("Kolom `nama_pcl` tidak ditemukan dalam data.")
+        st.warning("Kolom nama_pcl tidak ditemukan dalam dataset.")
     else:
         agg_cols = status_cols + (["total_data"] if "total_data" in df.columns else [])
         agg_pcl  = df.groupby("nama_pcl")[agg_cols].sum().reset_index()
@@ -619,14 +551,10 @@ with tab_pcl:
         if "total_data" in agg_pcl.columns:
             agg_pcl = agg_pcl.sort_values("total_data", ascending=False)
 
-        # ── Stacked bar ──────────────────────────────────────────────────────
         max_show  = 30
         chart_pcl = agg_pcl.head(max_show)
         if len(agg_pcl) > max_show:
-            st.caption(
-                f"Grafik menampilkan {max_show} pencacah teratas dari {len(agg_pcl)} total. "
-                "Lihat tabel di bawah untuk data lengkap."
-            )
+            st.caption(f"Menampilkan {max_show} pencacah terbesar dari total {len(agg_pcl)} pencacah.")
 
         fig_pcl = go.Figure()
         for i, c in enumerate(status_cols):
@@ -635,30 +563,25 @@ with tab_pcl:
                     name=c,
                     x=chart_pcl["nama_pcl"],
                     y=chart_pcl[c],
-                    marker_color=TEAL_PALETTE[i % len(TEAL_PALETTE)],
+                    marker_color=CHART_PALETTE[i % len(CHART_PALETTE)],
                     hovertemplate="<b>%{x}</b><br>" + c + ": %{y:,}<extra></extra>",
                 ))
         fig_pcl.update_layout(
             barmode="stack",
             **styled_chart_layout(height=420),
-            xaxis=dict(tickangle=-40, showgrid=False, tickfont_size=10,
-                       title="Nama Pencacah"),
-            yaxis=dict(showgrid=True, gridcolor="rgba(100,116,139,0.15)",
-                       title="Jumlah Usaha"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02,
-                        xanchor="right", x=1, font_size=11),
+            xaxis=dict(tickangle=-40, showgrid=False, tickfont_size=10, title="Nama Pencacah"),
+            yaxis=dict(showgrid=True, gridcolor="#EFE9E0", title="Jumlah Usaha"),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font_size=11),
         )
         st.plotly_chart(fig_pcl, use_container_width=True)
 
-        # ── Tabel Detail ─────────────────────────────────────────────────────
-        st.markdown("#### Tabel Detail per Pencacah")
+        st.markdown("#### Detail Tabel Pencacah")
 
         if "total_data" in agg_pcl.columns:
             agg_pcl["_sum"]    = agg_pcl[status_cols].sum(axis=1)
             agg_pcl["Selisih"] = agg_pcl["total_data"] - agg_pcl["_sum"]
             agg_pcl = agg_pcl.drop(columns=["_sum"])
 
-        # Sisipkan kolom Pengawas jika ada
         if "nama_pml" in df.columns:
             pml_map = df.groupby("nama_pcl")["nama_pml"].first().reset_index()
             agg_pcl = agg_pcl.merge(pml_map, on="nama_pcl", how="left")
@@ -667,13 +590,7 @@ with tab_pcl:
             ]
             agg_pcl = agg_pcl[col_order]
 
-        # Rename kolom untuk tampilan
         disp_pcl = rename_display(agg_pcl)
-        if "Selisih" in agg_pcl.columns:
-            bad = disp_pcl[disp_pcl.get("Selisih", 0) != 0] if "Selisih" in disp_pcl.columns else pd.DataFrame()
-            if not bad.empty:
-                with st.expander(f"⚠️ {len(bad)} pencacah punya selisih total_data vs jumlah status"):
-                    st.dataframe(bad, use_container_width=True, hide_index=True)
         col_cfg_pcl = {}
 
         if "Progress (%)" in disp_pcl.columns:
@@ -692,9 +609,8 @@ with tab_pcl:
         )
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
         st.download_button(
-            label="📊 Download Rekap Pencacah (XLSX)",
+            label="Download Rekap Pencacah (XLSX)",
             data=to_excel(disp_pcl, sheet_name="Rekap Pencacah"),
             file_name=f"rekap_pencacah_{timestamp}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -705,14 +621,11 @@ with tab_pcl:
 # TAB 3 — Per Pengawas (PML)
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_pml:
-    st.subheader("Monitoring Per Pengawas")
-    st.caption(
-        "Progress pengawas dihitung dari status yang sudah ditangani pengawas, yaitu "
-        "Approve + Reject + Edited dibandingkan Total Muatan."
-    )
+    st.subheader("Monitoring Per Pengawas (PML)")
+    st.caption("Aktivitas penanganan pengawas dihitung dari total status Approve, Reject, dan Edited.")
 
     if "nama_pml" not in df.columns:
-        st.warning("Kolom `nama_pml` tidak ditemukan dalam data.")
+        st.warning("Kolom nama_pml tidak ditemukan dalam dataset.")
     else:
         approve_cols_pml = [c for c in status_cols if "APPROV" in c.upper()]
         reject_cols_pml  = [c for c in status_cols if any(k in c.upper() for k in ["REJECT", "DITOLAK"])]
@@ -760,9 +673,6 @@ with tab_pml:
         p3.metric("Reject", f"{total_reject_pml:,}")
         p4.metric("Edited", f"{total_edited_pml:,}")
 
-        if not edited_cols_pml:
-            st.info("Kolom status `Edited` belum terdeteksi di data. Kolom Edited akan bernilai 0 sampai status tersebut muncul pada hasil scraping.")
-
         st.divider()
 
         chart_cols_pml = [c for c in ["Approve", "Reject", "Edited"] if c in agg_pml.columns]
@@ -790,9 +700,9 @@ with tab_pml:
                 barmode="stack",
                 text="Jumlah",
                 color_discrete_map={
-                    "Approve": "#14b8a6",
-                    "Reject": "#ef4444",
-                    "Edited": "#f59e0b",
+                    "Approve": "#2A9D8F",
+                    "Reject": "#E76F51",
+                    "Edited": "#ECB65F",
                 },
                 template=PLOT_TEMPLATE,
                 labels={"nama_pml": "", "Jumlah": "Jumlah Muatan"},
@@ -800,16 +710,13 @@ with tab_pml:
             fig_pml.update_traces(textposition="inside", textfont_size=10)
             fig_pml.update_layout(
                 **styled_chart_layout(height=max(380, len(chart_pml_top) * 28)),
-                xaxis=dict(showgrid=True, gridcolor="rgba(100,116,139,0.15)"),
+                xaxis=dict(showgrid=True, gridcolor="#EFE9E0"),
                 yaxis=dict(showgrid=False, categoryorder="total ascending"),
                 legend=dict(orientation="h", y=1.08),
             )
             st.plotly_chart(fig_pml, use_container_width=True)
 
-            if len(chart_pml) > top_n_pml:
-                st.caption(f"Menampilkan {top_n_pml} pengawas dengan total penanganan tertinggi dari {len(chart_pml)} pengawas.")
-
-        st.markdown("#### Tabel Detail per Pengawas")
+        st.markdown("#### Detail Tabel Pengawas")
 
         show_cols_pml = ["nama_pml"]
         if "Jumlah Pencacah" in agg_pml.columns:
@@ -821,8 +728,6 @@ with tab_pml:
         show_cols_pml += ["Approve", "Reject", "Edited"]
         if "Progress Pengawas (Total Muatan) (%)" in agg_pml.columns:
             show_cols_pml.append("Progress Pengawas (Total Muatan) (%)")
-        if "Progress Pengawas (Jumlah Prelist Awal) (%)" in agg_pml.columns:
-            show_cols_pml.append("Progress Pengawas (Jumlah Prelist Awal) (%)")
 
         disp_pml = agg_pml[show_cols_pml].rename(columns={
             "nama_pml": "Nama Pengawas",
@@ -833,14 +738,7 @@ with tab_pml:
         col_cfg_pml = {}
         if "Progress Pengawas (Total Muatan) (%)" in disp_pml.columns:
             col_cfg_pml["Progress Pengawas (Total Muatan) (%)"] = st.column_config.ProgressColumn(
-                "Progress Pengawas (Total Muatan) (%)",
-                min_value=0,
-                max_value=100,
-                format="%.1f%%"
-            )
-        if "Progress Pengawas (Jumlah Prelist Awal) (%)" in disp_pml.columns:
-            col_cfg_pml["Progress Pengawas (Jumlah Prelist Awal) (%)"] = st.column_config.ProgressColumn(
-                "Progress Pengawas (Jumlah Prelist Awal) (%)",
+                "Progress Pengawas (%)",
                 min_value=0,
                 max_value=100,
                 format="%.1f%%"
@@ -854,7 +752,7 @@ with tab_pml:
         )
 
         st.download_button(
-            label="📊 Download Rekap Pengawas (XLSX)",
+            label="Download Rekap Pengawas (XLSX)",
             data=to_excel(disp_pml, sheet_name="Rekap Pengawas"),
             file_name=f"rekap_pengawas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -862,18 +760,15 @@ with tab_pml:
         )
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 4 — Target Harian & Forecasting
+# TAB 4 — Target Harian & Proyeksi
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_target:
-    st.subheader("Target Harian & Proyeksi Penyelesaian")
+    st.subheader("Jadwal & Target Proyeksi Penyelesaian")
 
     if "nama_pcl" not in df.columns or "total_data" not in df.columns:
-        st.warning("Kolom `nama_pcl` atau `total_data` tidak ditemukan dalam data.")
+        st.warning("Kolom nama_pcl atau total_data tidak ditemukan.")
     else:
         today_wit = datetime.now(ZoneInfo("Asia/Jayapura")).date()
-
-        st.markdown("#### 🗓️ Jadwal Milestone SE2026")
-        st.caption("Sesuaikan tanggal/persentase di sini kalau ada perubahan jadwal resmi.")
 
         if "milestone_editor_data" not in st.session_state:
             st.session_state["milestone_editor_data"] = pd.DataFrame([
@@ -890,7 +785,7 @@ with tab_target:
             hide_index=True,
             key="milestone_editor",
             column_config={
-                "Tanggal": st.column_config.DateColumn("Tanggal", format="DD MMM YYYY"),
+                "Tanggal": st.column_config.DateColumn("Tanggal Target", format="DD MMM YYYY"),
                 "Target (%)": st.column_config.NumberColumn("Target (%)", min_value=0, max_value=100, step=1),
             },
         )
@@ -898,11 +793,8 @@ with tab_target:
         milestone_df["Tanggal"] = pd.to_datetime(milestone_df["Tanggal"]).dt.date
         milestone_df = milestone_df.sort_values("Tanggal").reset_index(drop=True)
 
-        if milestone_df.empty:
-            st.warning("Belum ada milestone yang diatur.")
-        else:
+        if not milestone_df.empty:
             total_data_all = float(df["total_data"].sum())
-            
             total_progress_nodraft = float(df[progress_without_draft_cols].sum().sum()) if progress_without_draft_cols else 0.0
             pct_now = (total_progress_nodraft / total_data_all * 100) if total_data_all else 0.0
 
@@ -911,11 +803,11 @@ with tab_target:
             for _, m in milestone_df.iterrows():
                 m_date, m_pct = m["Tanggal"], m["Target (%)"]
                 if m_date < today_wit:
-                    status = "✅ Tercapai" if pct_now >= m_pct else "⚠️ Belum tercapai (lewat tanggal)"
+                    status = "Tercapai" if pct_now >= m_pct else "Belum Tercapai (Lewat)"
                 elif m_date == today_wit:
-                    status = "✅ Tercapai" if pct_now >= m_pct else "🔴 Target hari ini"
+                    status = "Tercapai" if pct_now >= m_pct else "Target Hari Ini"
                 else:
-                    status = "⏳ Akan datang"
+                    status = "Akan Datang"
                     if next_milestone is None and pct_now < m_pct:
                         next_milestone = (m_date, m_pct)
                 status_rows.append({
@@ -933,115 +825,71 @@ with tab_target:
                 x=pd.to_datetime(milestone_status_df["Tanggal"]),
                 y=milestone_status_df["Target (%)"],
                 mode="lines+markers+text",
-                name="Target Rencana",
+                name="Rencana",
                 text=[f"{p}%" for p in milestone_status_df["Target (%)"]],
                 textposition="top center",
-                line=dict(color="#0ea5e9", width=3, dash="dot"),
-                marker=dict(size=9, color="#0ea5e9"),
+                line=dict(color="#D8983B", width=3, dash="dot"),
+                marker=dict(size=8, color="#D8983B"),
             ))
             fig_curve.add_trace(go.Scatter(
                 x=[pd.to_datetime(today_wit)],
                 y=[pct_now],
                 mode="markers+text",
-                name="Posisi Sekarang (Tanpa Draft)",
+                name="Realisasi Saat Ini",
                 text=[f"{pct_now:.1f}%"],
                 textposition="bottom center",
-                marker=dict(size=15, color="#14b8a6", symbol="diamond"),
+                marker=dict(size=14, color="#2A9D8F", symbol="circle"),
             ))
             fig_curve.update_layout(
                 **styled_chart_layout(height=340),
                 xaxis=dict(title="Tanggal", showgrid=False),
-                yaxis=dict(title="Progress (%)", range=[0, 108], showgrid=True,
-                           gridcolor="rgba(100,116,139,0.15)"),
-                legend=dict(orientation="h", y=1.15),
+                yaxis=dict(title="Progress (%)", range=[0, 108], showgrid=True, gridcolor="#EFE9E0"),
+                legend=dict(orientation="h", y=1.12),
             )
             st.plotly_chart(fig_curve, use_container_width=True)
 
             st.divider()
 
-            if next_milestone is None:
-                st.success("🎉 Progress saat ini (tanpa draft) sudah memenuhi seluruh milestone yang terjadwal!")
-            else:
+            if next_milestone is not None:
                 target_date, target_pct = next_milestone
                 days_left = max((target_date - today_wit).days, 1)
-
-                st.info(
-                    f"🎯 Milestone aktif: **{target_pct}%** pada **{target_date:%d %b %Y}** "
-                    f"({days_left} hari lagi)"
-                )
 
                 target_value_team = total_data_all * target_pct / 100
                 sisa_team = max(target_value_team - total_progress_nodraft, 0)
                 target_harian_team = int(np.ceil(sisa_team / days_left))
 
                 tk1, tk2, tk3, tk4 = st.columns(4)
-                tk1.metric("Progress Saat Ini (Tanpa Draft)", f"{pct_now:.1f}%")
-                tk2.metric("Target Milestone", f"{target_pct:.0f}%")
-                tk3.metric("Hari Tersisa", f"{days_left} hari")
-                tk4.metric("Target Harian", f"{target_harian_team:,}/hari")
+                tk1.metric("Progress Realisasi", f"{pct_now:.1f}%")
+                tk2.metric("Milestone Target", f"{target_pct:.0f}%")
+                tk3.metric("Sisa Waktu", f"{days_left} hari")
+                tk4.metric("Target Harian Tim", f"{target_harian_team:,}/hari")
 
                 st.divider()
 
                 agg_t = df.groupby("nama_pcl")[status_cols + ["total_data"]].sum().reset_index()
-                
                 agg_t["Progres"] = agg_t[progress_without_draft_cols].sum(axis=1) if progress_without_draft_cols else 0
                 agg_t["Progress (%)"] = (
                     agg_t["Progres"] / agg_t["total_data"].replace(0, pd.NA) * 100
                 ).round(1).fillna(0)
-                agg_t["Target Muatan (Milestone)"] = (
+                agg_t["Target Muatan"] = (
                     agg_t["total_data"] * target_pct / 100
                 ).round().astype(int)
-                agg_t["Sisa ke Milestone"] = (
-                    agg_t["Target Muatan (Milestone)"] - agg_t["Progres"]
+                agg_t["Sisa Target"] = (
+                    agg_t["Target Muatan"] - agg_t["Progres"]
                 ).clip(lower=0)
-                agg_t["Target Harian"] = np.ceil(agg_t["Sisa ke Milestone"] / days_left).astype(int)
+                agg_t["Target Harian"] = np.ceil(agg_t["Sisa Target"] / days_left).astype(int)
                 agg_t = agg_t.sort_values("Target Harian", ascending=False)
 
-                top_n_target = 30
-                chart_t = agg_t[agg_t["Sisa ke Milestone"] > 0].head(top_n_target)
-
-                if chart_t.empty:
-                    st.success("🎉 Semua pencacah sudah mencapai target milestone aktif ini.")
-                else:
-                    fig_target = px.bar(
-                        chart_t.sort_values("Target Harian"),
-                        x="Target Harian", y="nama_pcl",
-                        orientation="h",
-                        text="Target Harian",
-                        color="Target Harian",
-                        color_continuous_scale=["#14b8a6", "#f59e0b", "#ef4444"],
-                        template=PLOT_TEMPLATE,
-                        labels={"nama_pcl": ""},
-                    )
-                    fig_target.update_traces(textposition="outside", textfont_size=10)
-                    fig_target.update_layout(
-                        **styled_chart_layout(
-                            height=max(400, len(chart_t) * 22),
-                            coloraxis_showscale=False,
-                        ),
-                        xaxis=dict(showgrid=True, gridcolor="rgba(100,116,139,0.15)",
-                                   title="Target (per hari)"),
-                        yaxis=dict(showgrid=False),
-                    )
-                    st.plotly_chart(fig_target, use_container_width=True)
-                    if (agg_t["Sisa ke Milestone"] > 0).sum() > top_n_target:
-                        st.caption(
-                            f"Menampilkan {top_n_target} pencacah dengan target harian tertinggi "
-                            f"dari {(agg_t['Sisa ke Milestone'] > 0).sum()} pencacah yang masih punya sisa."
-                        )
-
-                st.divider()
-
-                st.markdown("#### Tabel Target Harian per Pencacah")
+                st.markdown("#### Detail Target Harian per Pencacah")
 
                 cols_show = ["nama_pcl", "total_data", "Progres", "Progress (%)",
-                             "Target Muatan (Milestone)", "Sisa ke Milestone", "Target Harian"]
+                             "Target Muatan", "Sisa Target", "Target Harian"]
                 if "nama_pml" in df.columns:
                     pml_map = df.groupby("nama_pcl")["nama_pml"].first().reset_index()
                     agg_t = agg_t.merge(pml_map, on="nama_pcl", how="left")
                     cols_show.insert(1, "nama_pml")
 
-                disp_t = rename_display(agg_t[cols_show]).rename(columns={"Progres": "Progres Tanpa Draft"})
+                disp_t = rename_display(agg_t[cols_show])
 
                 st.dataframe(
                     disp_t,
@@ -1050,36 +898,26 @@ with tab_target:
                     column_config={
                         "Progress (%)": st.column_config.ProgressColumn(
                             "Progress (%)", min_value=0, max_value=100, format="%.1f%%"
-                        ),
-                        "Target Harian": st.column_config.NumberColumn(
-                            "Target Harian (per hari)",
-                            help=f"Jumlah usaha yang harus diselesaikan per hari agar mencapai "
-                                 f"{target_pct:.0f}% pada {target_date:%d %b %Y}",
-                        ),
+                        )
                     },
                 )
 
                 st.download_button(
-                    "📥 Download Target Harian (XLSX)",
+                    "Download Target Harian (XLSX)",
                     data=to_excel(disp_t, sheet_name="Target Harian"),
                     file_name=f"target_harian_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="download_target",
                 )
 
-                st.caption(
-                    f"💡 **Target Harian** = ({target_pct:.0f}% × Total Muatan − Progres Tanpa Draft) ÷ Hari Tersisa "
-                    f"ke milestone aktif, dibulatkan ke atas."
-                )
-
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 5 — Per Desa
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_desa:
-    st.subheader("Rekap Per Desa / Kelurahan")
+    st.subheader("Rekapitualisasi Per Desa / Kelurahan")
 
     if "nmdesa" not in df.columns:
-        st.warning("Kolom `nmdesa` tidak ditemukan dalam data.")
+        st.warning("Kolom nmdesa tidak ditemukan.")
     else:
         grp_keys   = [c for c in ["nmkec", "nmdesa"] if c in df.columns]
         agg_cols_d = status_cols + (["total_data"] if "total_data" in df.columns else [])
@@ -1098,19 +936,13 @@ with tab_desa:
             agg_desa = agg_desa.merge(pcl_per_desa, on=grp_keys, how="left")
 
         if "Progress (%)" in agg_desa.columns:
-            top_desa = 40
+            top_desa = 30
             hm_df    = agg_desa.head(top_desa).copy()
 
             label_col = "nmdesa"
             if "nmkec" in hm_df.columns:
-                hm_df["_label"] = hm_df["nmkec"] + " · " + hm_df["nmdesa"]
+                hm_df["_label"] = hm_df["nmkec"] + " - " + hm_df["nmdesa"]
                 label_col = "_label"
-
-            hover_extra = {}
-            if "total_data" in hm_df.columns:
-                hover_extra["total_data"] = True
-            if "Jumlah PCL" in hm_df.columns:
-                hover_extra["Jumlah PCL"] = True
 
             fig_desa_bar = px.bar(
                 hm_df.sort_values("Progress (%)"),
@@ -1118,11 +950,10 @@ with tab_desa:
                 orientation="h",
                 text="Progress (%)",
                 color="Progress (%)",
-                color_continuous_scale=["#ef4444", "#f59e0b", "#10b981"],
+                color_continuous_scale=["#E76F51", "#ECB65F", "#2A9D8F"],
                 range_color=[0, 100],
                 template=PLOT_TEMPLATE,
                 labels={label_col: ""},
-                hover_data=hover_extra if hover_extra else None,
             )
             fig_desa_bar.update_traces(
                 texttemplate="%{text:.1f}%",
@@ -1139,34 +970,7 @@ with tab_desa:
             )
             st.plotly_chart(fig_desa_bar, use_container_width=True)
 
-        if len(agg_desa) <= 80 and "nmkec" in agg_desa.columns and done_cols:
-            st.markdown("#### Proporsi Penyelesaian per Kecamatan")
-            kec_agg = df.groupby("nmkec")[agg_cols_d].sum().reset_index()
-            if "total_data" in kec_agg.columns:
-                kec_agg["Selesai"] = kec_agg[done_cols].sum(axis=1)
-                kec_agg["Belum"]   = kec_agg["total_data"] - kec_agg["Selesai"]
-                kec_melt = kec_agg.melt(
-                    id_vars="nmkec", value_vars=["Selesai", "Belum"],
-                    var_name="Status", value_name="Jumlah"
-                )
-                fig_kec = px.bar(
-                    kec_melt, x="nmkec", y="Jumlah", color="Status",
-                    color_discrete_map={"Selesai": "#14b8a6",
-                                        "Belum": "rgba(51,65,85,0.8)"},
-                    barmode="stack",
-                    template=PLOT_TEMPLATE,
-                    labels={"nmkec": "Kecamatan"},
-                )
-                fig_kec.update_layout(
-                    **styled_chart_layout(height=340),
-                    xaxis=dict(tickangle=-30, showgrid=False),
-                    yaxis=dict(showgrid=True,
-                               gridcolor="rgba(100,116,139,0.15)"),
-                    legend=dict(orientation="h", y=1.05),
-                )
-                st.plotly_chart(fig_kec, use_container_width=True)
-
-        st.markdown("#### Tabel Detail per Desa")
+        st.markdown("#### Detail Tabel Desa")
 
         disp_desa = agg_desa.drop(columns=["_label"], errors="ignore")
         disp_desa = rename_display(disp_desa)
@@ -1184,23 +988,22 @@ with tab_desa:
 # TAB 6 — Data Mentah
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_raw:
-    st.subheader("Data Mentah")
+    st.subheader("Eksplorasi Data Mentah")
 
     all_cols  = df.columns.tolist()
     show_cols = st.multiselect(
-        "Tampilkan kolom", all_cols,
+        "Pilih Kolom Tampilan", all_cols,
         default=all_cols[:min(15, len(all_cols))],
         key="raw_cols",
     )
 
     view_df = rename_display(df[show_cols] if show_cols else df)
-
     st.dataframe(view_df, use_container_width=True, hide_index=True)
 
     timestamp_raw = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     st.download_button(
-        label="📥 Download Data Mentah (XLSX)",
+        label="Download Data Mentah (XLSX)",
         data=to_excel(view_df, sheet_name="Data Mentah"),
         file_name=f"data_mentah_{timestamp_raw}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
