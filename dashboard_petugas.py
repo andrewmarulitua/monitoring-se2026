@@ -543,11 +543,13 @@ with tab_pcl:
         agg_cols = status_cols + (["total_data"] if "total_data" in df.columns else [])
         agg_pcl  = df.groupby("nama_pcl")[agg_cols].sum().reset_index()
 
-        if "total_data" in agg_pcl.columns and done_cols:
+        # --- Perhitungan Progress Eksklusif Tanpa Draft ---
+        if "total_data" in agg_pcl.columns and progress_without_draft_cols:
             agg_pcl["Progress (%)"] = (
-                agg_pcl[done_cols].sum(axis=1)
+                agg_pcl[progress_without_draft_cols].sum(axis=1)
                 / agg_pcl["total_data"].replace(0, pd.NA) * 100
             ).round(1).fillna(0)
+
         if "total_data" in agg_pcl.columns:
             agg_pcl = agg_pcl.sort_values("total_data", ascending=False)
 
