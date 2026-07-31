@@ -777,7 +777,7 @@ with tab_target:
                 {"Tanggal": date(2026, 6, 30), "Target (%)": 25},
                 {"Tanggal": date(2026, 7, 14), "Target (%)": 40},
                 {"Tanggal": date(2026, 7, 31), "Target (%)": 75},
-                {"Tanggal": date(2026, 8, 31), "Target (%)": 100},
+                {"Tanggal": date(2026, 8, 15), "Target (%)": 100},  # <--- Diubah ke 15 Agustus
             ])
 
         milestone_df = st.data_editor(
