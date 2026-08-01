@@ -346,6 +346,7 @@ if not status_cols:
 # ─────────────────────────────────────────────────────────────────────────────
 f1, f2 = st.columns([1, 1])
 
+# 1. Filter Kecamatan
 with f1:
     if "nmkec" in df_raw.columns:
         all_kec = sorted(df_raw["nmkec"].dropna().unique().tolist())
@@ -356,9 +357,16 @@ with f1:
     else:
         sel_kec = []
 
+# Filter sementara berdasarkan kecamatan untuk memperbarui opsi pencacah
+df_kec = df_raw.copy()
+if sel_kec and "nmkec" in df_kec.columns:
+    df_kec = df_kec[df_kec["nmkec"].isin(sel_kec)]
+
+# 2. Filter Pencacah (Opsi bertingkat berdasarkan Kecamatan yang dipilih)
 with f2:
-    if "nama_pcl" in df_raw.columns:
-        all_pcl = sorted(df_raw["nama_pcl"].dropna().unique().tolist())
+    if "nama_pcl" in df_kec.columns:
+        # Mengambil pencacah HANYA dari kecamatan yang telah difilter
+        all_pcl = sorted(df_kec["nama_pcl"].dropna().unique().tolist())
         sel_pcl = st.multiselect(
             "Filter Pencacah", all_pcl,
             default=[], placeholder="Cari nama pencacah...",
@@ -366,9 +374,8 @@ with f2:
     else:
         sel_pcl = []
 
-df = df_raw.copy()
-if sel_kec and "nmkec" in df.columns:
-    df = df[df["nmkec"].isin(sel_kec)]
+# Terapkan filter pencacah ke DataFrame utama
+df = df_kec.copy()
 if sel_pcl and "nama_pcl" in df.columns:
     df = df[df["nama_pcl"].isin(sel_pcl)]
 

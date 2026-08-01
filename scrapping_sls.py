@@ -1,16 +1,21 @@
-import pandas as pd
-import requests
+from datetime import datetime
 import os
 import random
-import tempfile
-from datetime import datetime
 import schedule
+import tempfile
 import time
-from config_se2026 import NAMA_KABUPATEN, BASE_PATH, LATEST_FILE, archive_filename
+from config_se2026 import (
+    BASE_PATH,
+    LATEST_FILE,
+    NAMA_KABUPATEN,
+    archive_filename,
+)
+import pandas as pd
+import requests
 
 # ================= SETTINGS =================
-URL_DATA = 'https://fasih-sm.bps.go.id/app/api/analytic/api/v2/assignment/report-progress-by-responsibility' 
-base_path = BASE_PATH                #FOLDER UNTUK MENYIMPAN DATA HASIL SCRAPPING
+URL_DATA = "https://fasih-sm.bps.go.id/app/api/analytic/api/v2/assignment/report-progress-by-responsibility"
+base_path = BASE_PATH  # FOLDER UNTUK MENYIMPAN DATA HASIL SCRAPPING
 # ==========================================================
 
 
@@ -51,25 +56,25 @@ headers = {
 }
 
 json_data = {
-    'surveyPeriodId': 'fd68e454-ba45-4b85-8205-f3bf777ded24',
-    'surveyRoleId': '6d7d919a-45e5-4779-bb87-2905b49fd31a',
-    'size': 5,
-    'page': 0,
-    'search': '',
-    'target': 'TARGET_ONLY',
-    'region': {
-        'region1Id': None,
-        'region2Id': None,
-        'region3Id': None,
-        'region4Id': None,
-        'region5Id': None,
-        'region6Id': None,
-        'region7Id': None,
-        'region8Id': None,
-        'region9Id': None,
-        'region10Id': None,
+    "surveyPeriodId": "fd68e454-ba45-4b85-8205-f3bf777ded24",
+    "surveyRoleId": "6d7d919a-45e5-4779-bb87-2905b49fd31a",
+    "size": 5,
+    "page": 0,
+    "search": "",
+    "target": "TARGET_ONLY",
+    "region": {
+        "region1Id": None,
+        "region2Id": None,
+        "region3Id": None,
+        "region4Id": None,
+        "region5Id": None,
+        "region6Id": None,
+        "region7Id": None,
+        "region8Id": None,
+        "region9Id": None,
+        "region10Id": None,
     },
-    'regionSummaryLevel': 6,
+    "regionSummaryLevel": 6,
 }
 
 # ================================================================
@@ -77,71 +82,174 @@ json_data = {
 if not os.path.exists(base_path):
     os.makedirs(base_path)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-backup_file = archive_filename(timestamp)  # arsip histori, 1 file per kali scraping
+backup_file = archive_filename(
+    timestamp
+)  # arsip histori, 1 file per kali scraping
 
 
 def save_and_merge(new_data):
-    """Simpan ke file arsip (histori, append) DAN ke file LATEST (overwrite, untuk dashboard)"""
+    """Menerima data hasil scraping, memperbarui & memperkaya datanya dengan master_data,
+
+    lalu menyimpan snapshot ke LATEST_FILE dan merekamnya ke arsip histori.
+    """
     if not new_data:
         return
 
-    df_new = pd.DataFrame(new_data)
-    df_new["scraped_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    master = pd.read_excel("data/master_data.xlsx")
+    print("\n-------------------------------------------------------------")
+    print("🔄 Memproses dan menyelaraskan data hasil scraping...")
 
-    master["pencacah"] = (
-        master["pencacah"]
-        .astype(str)
-        .str.strip()
-        .str.lower()
-    )
+    df_target = pd.DataFrame(new_data)
+    df_target["scraped_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    df_new["email"] = (
-        df_new["email"]
-        .astype(str)
-        .str.strip()
-        .str.lower()
-    )
+    # Baca file master jika tersedia
+    master_file_path = os.path.join(base_path, "master_data.xlsx")
+    if os.path.exists(master_file_path):
+        df_master = pd.read_excel(master_file_path)
 
-    master["regionCode"] = master["regionCode"].astype(str)
-    df_new["regionCode"] = df_new["regionCode"].astype(str)
+        columns_to_update = [
+            "nmkab",
+            "nmkec",
+            "nmdesa",
+            "nmsls",
+            "nmsubsls",
+            "pengawas",
+            "pencacah",
+            "nama_pcl",
+            "nama_pml",
+        ]
 
-    df_new = df_new.merge(
-        master[
-            [
-                "regionCode",
-                "nmkab",
-                "nmkec",
-                "nmdesa",
-                "nmsls",
-                "nmsubsls",
-                "pengawas",
-                "pencacah",
-                "nama_pcl",
-                "nama_pml"
+        # 1. Antisipasi inkonsistensi tipe data pada regionCode
+        df_target["regionCode"] = (
+            df_target["regionCode"].astype(str).str.strip()
+        )
+        df_master["regionCode"] = (
+            df_master["regionCode"].astype(str).str.strip()
+        )
+
+        # 2. Filter kolom master data agar hanya mengambil regionCode dan kolom yang dibutuhkan
+        available_master_cols = [
+            col for col in columns_to_update if col in df_master.columns
+        ]
+        df_master_subset = df_master[
+            ["regionCode"] + available_master_cols
+        ].drop_duplicates(subset=["regionCode"])
+
+        # 3. Gabungkan data berdasarkan regionCode (Left Join)
+        df_merged = pd.merge(
+            df_target,
+            df_master_subset,
+            on="regionCode",
+            how="left",
+            suffixes=("", "_master"),
+        )
+
+        # 4. Pembaruan dan Penyelarasan 'pengawas' & 'nama_pml' serta Wilayah
+        strict_overwrite_cols = ["pengawas", "nama_pml"]
+
+        for col in available_master_cols:
+            master_col_name = f"{col}_master"
+
+            if master_col_name in df_merged.columns:
+                if col not in df_merged.columns:
+                    # Jika kolom belum ada di target, langsung pakai dari master
+                    df_merged[col] = df_merged[master_col_name]
+                else:
+                    if col in strict_overwrite_cols:
+                        # Gunakan master_data sebagai acuan utama
+                        df_merged[col] = df_merged[master_col_name].fillna(
+                            df_merged[col]
+                        )
+                    else:
+                        # Untuk kolom wilayah/lainnya, cukup lengkapi jika kosong (fillna)
+                        df_merged[col] = df_merged[col].fillna(
+                            df_merged[master_col_name]
+                        )
+
+                # Hapus kolom bantuan '_master'
+                df_merged.drop(columns=[master_col_name], inplace=True)
+
+        # 5. Penyelarasan Kolom Username, Pencacah, dan Nama PCL
+        if "username" in df_merged.columns and "pencacah" in df_merged.columns:
+            mask_mismatch = (
+                df_merged["username"].astype(str).str.strip()
+                != df_merged["pencacah"].astype(str).str.strip()
+            )
+            df_merged.loc[mask_mismatch, "pencacah"] = df_merged.loc[
+                mask_mismatch, "username"
             ]
-        ],
-        left_on=["email", "regionCode"],
-        right_on=["pencacah", "regionCode"],
-        how="left"
-    )
 
-    # 1) Arsip histori - tetap ditambah (append), supaya bisa lihat tren dari waktu ke waktu
-    if os.path.exists(backup_file):
-        df_old = pd.read_excel(backup_file)
-        df_archive = pd.concat([df_old, df_new], ignore_index=True)
+        if "pencacah" in df_master.columns and "nama_pcl" in df_master.columns:
+            df_master_clean = df_master.dropna(
+                subset=["pencacah", "nama_pcl"]
+            ).drop_duplicates(subset=["pencacah"])
+            pcl_map = dict(
+                zip(
+                    df_master_clean["pencacah"].astype(str).str.strip(),
+                    df_master_clean["nama_pcl"],
+                )
+            )
+
+            if "pencacah" in df_merged.columns:
+                existing_nama_pcl = df_merged.get(
+                    "nama_pcl", pd.Series([None] * len(df_merged))
+                )
+                df_merged["nama_pcl"] = (
+                    df_merged["pencacah"]
+                    .astype(str)
+                    .str.strip()
+                    .map(pcl_map)
+                    .fillna(existing_nama_pcl)
+                )
+
+        df_final = df_merged
     else:
-        df_archive = df_new
+        print(
+            f"⚠️ Warning: File '{master_file_path}' tidak ditemukan."
+            " Menggunakan data tanpa enrichment master."
+        )
+        df_final = df_target
+
+    # 6. Konversi Kolom Hasil Rekapitulasi Menjadi Format Number
+    numeric_cols = [
+        "total_data",
+        "APPROVED BY Pengawas",
+        "SUBMITTED BY Pencacah",
+        "OPEN",
+        "REJECTED BY Pengawas",
+        "DRAFT",
+        "EDITED BY Pengawas",
+        "REVOKED BY Pengawas",
+        "SUBMITTED RESPONDENT",
+    ]
+
+    for col in numeric_cols:
+        if col in df_final.columns:
+            df_final[col] = pd.to_numeric(df_final[col], errors="coerce")
+
+    # 7. Simpan Arsip histori (append)
+    if os.path.exists(backup_file):
+        try:
+            df_old = pd.read_excel(backup_file)
+            df_archive = pd.concat([df_old, df_final], ignore_index=True)
+        except Exception:
+            df_archive = df_final
+    else:
+        df_archive = df_final
+
     df_archive.to_excel(backup_file, index=False)
 
-    # 2) File LATEST - SELALU ditimpa dengan snapshot terbaru saja (dibaca dashboard)
-    _atomic_write_excel(df_new, LATEST_FILE)
-    print(f"💾 Snapshot terbaru disimpan ke: {LATEST_FILE}")
+    # 8. Simpan File LATEST dengan aman (Atomic Write)
+    _atomic_write_excel(df_final, LATEST_FILE)
+    print(f"💾 Snapshot terbaru dan terolah berhasil disimpan ke: {LATEST_FILE}")
+    print("-------------------------------------------------------------\n")
 
 
 def _atomic_write_excel(df, path):
     """Tulis Excel dengan aman: tulis ke file sementara dulu, baru rename.
-    Mencegah dashboard membaca file yang setengah jadi/korup saat scraping sedang menulis."""
+
+    Mencegah dashboard membaca file yang setengah jadi/korup saat scraping
+    sedang menulis.
+    """
     folder = os.path.dirname(path) or "."
     fd, tmp_path = tempfile.mkstemp(suffix=".xlsx", dir=folder)
     os.close(fd)
@@ -153,55 +261,51 @@ def _atomic_write_excel(df, path):
             os.remove(tmp_path)
         raise
 
+
 def auto_push_github():
     import subprocess
 
     try:
-        subprocess.run(
-            ["git", "add", "data/"],
-            check=True
-        )
+        # 1. Add semua perubahan di folder data/
+        subprocess.run(["git", "add", "data/"], check=True)
 
+        # 2. Cek apakah ada perubahan
         status = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True,
-            text=True
+            ["git", "status", "--porcelain"], capture_output=True, text=True
         )
 
         if not status.stdout.strip():
-            print("📌 Tidak ada perubahan")
+            print("📌 Tidak ada perubahan untuk dipush ke GitHub.")
             return
 
+        # 3. Commit dengan pesan "update" saja
         subprocess.run(
-            ["git", "commit", "-m", "Update hasil scraping"],
-            check=True
+            ["git", "commit", "-m", "update"],  # <-- Diubah di sini
+            check=True,
         )
 
-        # sinkron dulu dengan GitHub
+        # 4. Sinkronisasi (pull) terlebih dahulu
         subprocess.run(
-            ["git", "pull", "--rebase", "origin", "main"],
-            check=True
+            ["git", "pull", "--rebase", "origin", "main"], check=True
         )
 
-        subprocess.run(
-            ["git", "push", "origin", "main"],
-            check=True
-        )
+        # 5. Push ke GitHub
+        subprocess.run(["git", "push", "origin", "main"], check=True)
 
-        print("✅ Data berhasil dipush ke GitHub")
+        print("✅ Data berhasil dipush ke GitHub dengan pesan commit 'update'")
 
     except Exception as e:
         print(f"❌ Error push GitHub: {e}")
- 
- 
+
+
 def fetch_data():
     all_rows = []
     page = 0
     size = 10
 
     while True:
-        json_data['page'] = page
-        json_data['size'] = size
+        json_data["page"] = page
+        json_data["size"] = size
 
         response = requests.post(
             URL_DATA,
@@ -223,7 +327,7 @@ def fetch_data():
 
         print(f"📄 Page {page} | jumlah data: {len(data)} | last: {is_last}")
 
-        # 🔽 Flatten
+        # 🔽 Flattening Data JSON
         for user in data:
             for region in user.get("regionSummary", []):
                 row = {
@@ -250,21 +354,27 @@ def fetch_data():
     if all_rows:
         save_and_merge(all_rows)
 
-    print("🎉 Semua data berhasil disimpan!")
+    print("🎉 Semua data berhasil diproses dan disimpan!")
 
 
 def job():
-    print(f"\n[+] Memulai proses scraping pada {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(
+        f"\n[+] Memulai proses scraping pada"
+        f" {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    )
     fetch_data()
     auto_push_github()
 
+
 if __name__ == "__main__":
-    
     schedule.every(4).hours.do(job)
 
-    print("⏱️  Script berjalan otomatis setiap 4 jam. Tekan Ctrl+C untuk menghentikan.")
+    print(
+        "⏱️  Script berjalan otomatis setiap 4 jam. Tekan Ctrl+C untuk"
+        " menghentikan."
+    )
 
-    # Jalankan fungsi satu kali saat script pertama kali dibuka (opsional)
+    # Jalankan fungsi satu kali saat script pertama kali dibuka
     job()
 
     # Loop agar script terus berjalan mengecek jadwal
