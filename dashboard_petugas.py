@@ -387,7 +387,12 @@ if len(df) < len(df_raw):
 # ─────────────────────────────────────────────────────────────────────────────
 n_pcl      = df["nama_pcl"].nunique() if "nama_pcl" in df.columns else 0
 n_pml      = df["nama_pml"].nunique() if "nama_pml" in df.columns else 0
-n_desa     = df["nmdesa"].nunique()   if "nmdesa"   in df.columns else 0
+if "nmkec" in df.columns and "nmdesa" in df.columns:
+    n_desa = df[["nmkec", "nmdesa"]].drop_duplicates().shape[0]
+elif "nmdesa" in df.columns:
+    n_desa = df["nmdesa"].nunique()
+else:
+    n_desa = 0
 total_data = int(df["total_data"].sum()) if "total_data" in df.columns else int(df[status_cols].sum().sum())
 
 done_cols     = [c for c in status_cols if any(k in c.upper() for k in DONE_KEYWORDS)]
